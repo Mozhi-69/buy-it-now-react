@@ -8,6 +8,15 @@ export interface Product {
   rating: number;
   description: string;
   originalPrice?: number;
+  reviews?: Review[];
+}
+
+export interface Review {
+  id: number;
+  userName: string;
+  rating: number;
+  comment: string;
+  date: string;
 }
 
 export interface CartItem extends Product {

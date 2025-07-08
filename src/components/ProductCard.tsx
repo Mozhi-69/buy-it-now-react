@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Heart, ShoppingCart, Star } from 'lucide-react';
 import { Product } from '../types';
 import { useApp } from '../context/AppContext';
 import { toast } from '../hooks/use-toast';
+import ProductModal from './ProductModal';
 
 interface ProductCardProps {
   product: Product;
@@ -11,9 +12,11 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { state, dispatch } = useApp();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const isInWishlist = state.wishlist.some(item => item.id === product.id);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
     dispatch({ type: 'ADD_TO_CART', payload: product });
     toast({
       title: "Added to cart!",
@@ -21,7 +24,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     });
   };
 
-  const handleToggleWishlist = () => {
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (isInWishlist) {
       dispatch({ type: 'REMOVE_FROM_WISHLIST', payload: product.id });
       toast({
@@ -35,6 +39,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         description: `${product.name} has been added to your wishlist.`,
       });
     }
+  };
+
+  const handleCardClick = () => {
+    setIsModalOpen(true);
   };
 
   const renderStars = (rating: number) => {
@@ -59,59 +67,70 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
-      <div className="relative overflow-hidden">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <button
-          onClick={handleToggleWishlist}
-          className={`absolute top-2 right-2 p-2 rounded-full transition-colors ${
-            isInWishlist
-              ? 'bg-red-500 text-white'
-              : 'bg-white text-gray-600 hover:bg-red-50 hover:text-red-500'
-          }`}
-        >
-          <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-current' : ''}`} />
-        </button>
-      </div>
-
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{product.name}</h3>
-        <p className="text-sm text-gray-600 mb-2 line-clamp-2">{product.description}</p>
-        
-        <div className="flex items-center mb-2">
-          <div className="flex items-center space-x-1">
-            {renderStars(product.rating)}
-          </div>
-          <span className="ml-2 text-sm text-gray-600">({product.rating})</span>
+    <>
+      <div 
+        onClick={handleCardClick}
+        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 group cursor-pointer"
+      >
+        <div className="relative overflow-hidden">
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+          <button
+            onClick={handleToggleWishlist}
+            className={`absolute top-2 right-2 p-2 rounded-full transition-colors ${
+              isInWishlist
+                ? 'bg-red-500 text-white'
+                : 'bg-white text-gray-600 hover:bg-red-50 hover:text-red-500'
+            }`}
+          >
+            <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-current' : ''}`} />
+          </button>
         </div>
 
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <span className="text-lg font-bold text-gray-900">${product.price}</span>
+        <div className="p-4">
+          <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{product.name}</h3>
+          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{product.description}</p>
+          
+          <div className="flex items-center mb-2">
+            <div className="flex items-center space-x-1">
+              {renderStars(product.rating)}
+            </div>
+            <span className="ml-2 text-sm text-gray-600">({product.rating})</span>
+          </div>
+
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <span className="text-lg font-bold text-gray-900">${product.price}</span>
+              {product.originalPrice && (
+                <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
+              )}
+            </div>
             {product.originalPrice && (
-              <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
+              <span className="text-sm text-green-600 font-medium">
+                Save ${product.originalPrice - product.price}
+              </span>
             )}
           </div>
-          {product.originalPrice && (
-            <span className="text-sm text-green-600 font-medium">
-              Save ${product.originalPrice - product.price}
-            </span>
-          )}
-        </div>
 
-        <button
-          onClick={handleAddToCart}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
-        >
-          <ShoppingCart className="w-4 h-4" />
-          <span>Add to Cart</span>
-        </button>
+          <button
+            onClick={handleAddToCart}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            <span>Add to Cart</span>
+          </button>
+        </div>
       </div>
-    </div>
+
+      <ProductModal 
+        product={product}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </>
   );
 };
 
